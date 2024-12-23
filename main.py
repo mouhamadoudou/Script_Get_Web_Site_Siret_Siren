@@ -10,33 +10,33 @@ sites = [
       "https://www.cimaises-et-plus.com",
       "https://www.azialo.com",
       "https://www.officeeasy.fr",
-      "https://www.maxi-pieces-50.fr/",
-      "https://www.ase-energy.com/",
-      "https://www.cuisinieresgrandelargeur.com/",
-      "https://www.ludifolie.com/",
-      "https://www.equipementech.com/",
-      "https://www.donuts-racing.com/",
-      "https://myperfumeshome.com/",
-      "https://www.ohmykitchen.com/",
-      "https://www.veloactif.com/",
-      "https://www.cernunos.fr/",
+      "https://www.maxi-pieces-50.fr",
+      "https://www.ase-energy.com",
+      "https://www.cuisinieresgrandelargeur.com",
+      "https://www.ludifolie.com",
+      "https://www.equipementech.com",
+      "https://www.donuts-racing.com",
+      "https://myperfumeshome.com",
+      "https://www.ohmykitchen.com",
+      "https://www.veloactif.com",
+      "https://www.cernunos.fr",
       "https://www.boutikazik.com/fr",
-      "https://www.gt-outillage.com/",
-      "https://amijardin.fr/",
-      "https://www.kokmaison.com/",
-      "https://www.pro-mob.fr/",
-      "https://www.sofamed.com/",
-      "https://www.tinkco.com/",
-      "https://www.mariannemelodie.fr/",
-      "https://www.bricoflor.fr/",
-      "https://www.7days.fr/",
+      "https://www.gt-outillage.com",
+      "https://amijardin.fr",
+      "https://www.kokmaison.com",
+      "https://www.pro-mob.fr",
+      "https://www.sofamed.com",
+      "https://www.tinkco.com",
+      "https://www.mariannemelodie.fr",
+      "https://www.bricoflor.fr",
+      "https://www.7days.fr",
       "https://www.calicosy.com/fr",
-      "https://objet-expression.com/",
-      "https://www.direct-mat.com/",
+      "https://objet-expression.com",
+      "https://www.direct-mat.com",
       "https://www.fusil-calais.com/fr",
-      "https://www.croquegel.com/",
-      "https://www.drawer.fr/",
-      "https://happy-garden.fr/"
+      "https://www.croquegel.com",
+      "https://www.drawer.fr",
+      "https://happy-garden.fr"
 ]
 
 headers = {
@@ -54,8 +54,9 @@ def extract_siret_from_mentions_legales(url):
     mentions_legales_link = None
 
     for a in soup.find_all('a', href=True):
-        if 'mentions' in a['href'].lower():
-            # print(a)
+        href = a['href'].lower()
+        strLink = a.get_text().lower() or ''
+        if 'mentions' in a['href'].lower() or 'mentions' in strLink:
             mentions_legales_link = a['href']
             break
     # print(soup.find_all('a', href=True))
@@ -63,12 +64,12 @@ def extract_siret_from_mentions_legales(url):
     if mentions_legales_link is None:
         for a in soup.find_all('a', href=True):
             href = a['href'].lower()
+            # print('mentions' in strLink)
             if ('confidentialites' in href or 'conditions' in href) and ('politique' in href or 'generales' in href):
                 mentions_legales_link = a['href']
                 break
     
     if mentions_legales_link:
-        print(mentions_legales_link)
         full_url = mentions_legales_link if mentions_legales_link.startswith('http') else url + mentions_legales_link
         response = requests.get(full_url,  headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -89,22 +90,22 @@ def extract_siret_from_mentions_legales(url):
         return None
     
 
-url_site_ecommerce = 'https://www.tinkco.com/'  
-siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-if siret:
-    print(f"SIRET/SIREN récupéré : {siret}")
+# url_site_ecommerce = 'https://www.bricoflor.fr/'  
+# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+# if siret:
+#     print(f"SIRET/SIREN récupéré : {siret}")
 
 
-# def get_siret_from_sites(sites):
-#     result = []
-#     for site in sites:
-#         siret = extract_siret_from_mentions_legales(site)
-#         if siret:
-#             result.append({"site": site, "SIRET/SIREN": siret})
-#         else:
-#             result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
-#     return result
+def get_siret_from_sites(sites):
+    result = []
+    for site in sites:
+        siret = extract_siret_from_mentions_legales(site)
+        if siret:
+            result.append({"site": site, "SIRET/SIREN": siret})
+        else:
+            result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
+    return result
 
-# result = get_siret_from_sites(sites)
+result = get_siret_from_sites(sites)
 
-# print(result)
+print(result)
