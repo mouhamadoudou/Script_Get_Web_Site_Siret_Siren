@@ -54,6 +54,15 @@ def extract_siret_from_mentions_legales(url):
             # print(a)
             mentions_legales_link = a['href']
             break
+    # print(soup.find_all('a', href=True))
+    
+    if mentions_legales_link is None:
+        for a in soup.find_all('a', href=True):
+            href = a['href'].lower()
+            print(href, '\n')
+            if ('confidentialites' in href or 'conditions' in href) and ('politique' in href or 'generales' in href):
+                mentions_legales_link = a['href']
+                break
     
     if mentions_legales_link:
         full_url = mentions_legales_link if mentions_legales_link.startswith('http') else url + mentions_legales_link
@@ -66,6 +75,7 @@ def extract_siret_from_mentions_legales(url):
 
         # print(siret_siren_list)
         if siret_siren_list:
+
             return siret_siren_list[0]  
         else:
             print("SIRET/SIREN non trouvé. URL = ", url)
@@ -74,22 +84,22 @@ def extract_siret_from_mentions_legales(url):
         print("Lien vers les mentions légales non trouvé.  URL = ", url)
         return None
 
-url_site_ecommerce = 'https://www.cernunos.fr/'  
+url_site_ecommerce = 'https://www.maxi-pieces-50.fr/'  
 siret = extract_siret_from_mentions_legales(url_site_ecommerce)
 if siret:
     print(f"SIRET/SIREN récupéré : {siret}")
 
 
-def get_siret_from_sites(sites):
-    result = []
-    for site in sites:
-        siret = extract_siret_from_mentions_legales(site)
-        if siret:
-            result.append({"site": site, "SIRET/SIREN": siret})
-        else:
-            result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
-    return result
+# def get_siret_from_sites(sites):
+#     result = []
+#     for site in sites:
+#         siret = extract_siret_from_mentions_legales(site)
+#         if siret:
+#             result.append({"site": site, "SIRET/SIREN": siret})
+#         else:
+#             result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
+#     return result
 
-result = get_siret_from_sites(sites)
+# result = get_siret_from_sites(sites)
 
-print(result)
+# print(result)
