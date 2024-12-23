@@ -39,11 +39,15 @@ sites = [
       "https://happy-garden.fr/"
 ]
 
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+}
+
 def extract_siret_from_mentions_legales(url):
-    response = requests.get(url)
+    response = requests.get(url, headers=headers)
     
     if response.status_code != 200:
-        print("Erreur de connexion au site. URL = ", url)
+        print("Erreur de connexion au site. res = ", response)
     
     soup = BeautifulSoup(response.text, 'html.parser')
     
@@ -59,21 +63,21 @@ def extract_siret_from_mentions_legales(url):
     if mentions_legales_link is None:
         for a in soup.find_all('a', href=True):
             href = a['href'].lower()
-            print(href, '\n')
             if ('confidentialites' in href or 'conditions' in href) and ('politique' in href or 'generales' in href):
                 mentions_legales_link = a['href']
                 break
     
     if mentions_legales_link:
+        print(mentions_legales_link)
         full_url = mentions_legales_link if mentions_legales_link.startswith('http') else url + mentions_legales_link
-        response = requests.get(full_url)
+        response = requests.get(full_url,  headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
         page_text = soup.get_text().replace(' ', '')
         
         siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)', page_text)
 
-        # print(siret_siren_list)
+        # print(page_text)
         if siret_siren_list:
 
             return siret_siren_list[0]  
@@ -83,8 +87,9 @@ def extract_siret_from_mentions_legales(url):
     else:
         print("Lien vers les mentions légales non trouvé.  URL = ", url)
         return None
+    
 
-url_site_ecommerce = 'https://www.maxi-pieces-50.fr/'  
+url_site_ecommerce = 'https://www.tinkco.com/'  
 siret = extract_siret_from_mentions_legales(url_site_ecommerce)
 if siret:
     print(f"SIRET/SIREN récupéré : {siret}")
