@@ -2,7 +2,10 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import json
-from requests.exceptions import RequestException
+from requests.exceptions import RequestException, Timeout
+import random
+from botData import user_agents
+
 sites = [
     "https://www.jules.com",
     "https://www.zalando.fr",
@@ -50,13 +53,11 @@ sites = [
     "https://www.primark.com",
     "https://www.degriffstock.com",
     "https://www.casual-senas.fr",
-    "https://www.printemps.com",
     "https://blacks-legend.com",
     "https://www.decathlon.fr",
     "https://www.footlocker.fr",
     "https://www.sarenza.com",
-    "https://www.amazon.fr",
-    "https://www.emp-online.fr",
+    "https://emp-online.fr",
     "https://lhabitfrancais.com",
     "https://www.farfetch.com",
     "https://www.asos.com",
@@ -89,44 +90,38 @@ sites = [
     "https://www.superdry.fr",
     "https://shop.mango.com",
     "https://www.destock-sport-et-mode.com",
-    "https://www.zalando.fr",
     "https://www.modz.fr",
     "https://thevillageoutlet.com",
-    "https://www.intersport.fr",
     "https://www.lhommemoderne.fr",
     "https://www.shilton.fr",
     "https://www.calvinklein.fr",
-    "https://www.masculin.com",
     "https://www.ralphlauren.fr",
     "https://www.street-one.fr",
     "https://www.lacoste.com",
     "https://www.philippemodel.com",
-    "https://www.monoprix.fr",
     "https://www.bhv.fr"
 ]
 
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-}
-
-
-def sendRequest(url):
+def sendRequest(url, timeout=5):
+    headers = random.choice(user_agents)
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=timeout)
         return response
+    except Timeout:
+        # print(f"Temps de réponse dépassé pour {url}")
+        return None
     except RequestException as e:
-        print(f"Erreur lors de la requête vers {url}")
-        
-        # print(f"Erreur lors de la requête vers {url}: {e}")
+        print(f"Erreur lors de la requête vers {url}: {e}")
         return None
        
 
 def extract_siret_from_mentions_legales(url):
+    headers = random.choice(user_agents)
     print("Site en cours d'analyse : ", url)
  
     # response = requests.get(url, headers=headers)
     response = sendRequest(url)
-    
+    print("ok ici")
     if response is None:
         print(f"Erreur de connexion au site : {url}")
         return None
@@ -191,7 +186,7 @@ def extract_siret_from_mentions_legales(url):
         return None
     
 
-url_site_ecommerce = 'https://www.vetdepro.com'  
+url_site_ecommerce = 'https://www.calvinklein.fr'  
 siret = extract_siret_from_mentions_legales(url_site_ecommerce)
 if siret:
     print(f"SIRET/SIREN récupéré : {siret}")
