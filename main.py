@@ -162,9 +162,13 @@ def extract_siret_from_mentions_legales(url):
             mentions_legales_link = mentions_legales_link[1:]
         if mentions_legales_link.startswith('/'):
             mentions_legales_link = mentions_legales_link[1:]
+        
         if mentions_legales_link.startswith('http') :
             full_url = mentions_legales_link 
+        elif mentions_legales_link.startswith('www'): 
+            full_url = "https://" + mentions_legales_link
         else :
+            print("la")
             full_url = url + '/' + mentions_legales_link
         print(full_url)
         
