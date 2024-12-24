@@ -45,18 +45,18 @@ headers = {
 
 def extract_siret_from_mentions_legales(url):
     response = requests.get(url, headers=headers)
-    
     if response.status_code != 200:
         print("Erreur de connexion au site. res = ", response)
     
     soup = BeautifulSoup(response.text, 'html.parser')
+    # print("ee == ", soup)
     
     mentions_legales_link = None
 
     for a in soup.find_all('a', href=True):
         href = a['href'].lower()
         strLink = a.get_text().lower() or ''
-        if 'mentions' in a['href'].lower() or 'mentions' in strLink:
+        if 'mentions' in a['href'].lower() or 'mentionslegales' in a['href'].lower() or 'mentions' in strLink:
             mentions_legales_link = a['href']
             break
     # print(soup.find_all('a', href=True))
@@ -70,7 +70,13 @@ def extract_siret_from_mentions_legales(url):
                 break
     
     if mentions_legales_link:
-        full_url = mentions_legales_link if mentions_legales_link.startswith('http') else url + mentions_legales_link
+        if mentions_legales_link.startswith('http') :
+            full_url = mentions_legales_link 
+        else : 
+            if mentions_legales_link.startswith('/'):
+                mentions_legales_link = mentions_legales_link[1:]
+            full_url = url + '/' + mentions_legales_link
+        
         response = requests.get(full_url,  headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
@@ -80,32 +86,34 @@ def extract_siret_from_mentions_legales(url):
 
         # print(page_text)
         if siret_siren_list:
-
             return siret_siren_list[0]  
         else:
             print("SIRET/SIREN non trouvé. URL = ", url)
             return None
+        return None
     else:
         print("Lien vers les mentions légales non trouvé.  URL = ", url)
         return None
     
 
-# url_site_ecommerce = 'https://www.bricoflor.fr/'  
-# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-# if siret:
-#     print(f"SIRET/SIREN récupéré : {siret}")
+url_site_ecommerce = 'https://www.croquegel.com'  
+siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+if siret:
+    print(f"SIRET/SIREN récupéré : {siret}")
 
 
-def get_siret_from_sites(sites):
-    result = []
-    for site in sites:
-        siret = extract_siret_from_mentions_legales(site)
-        if siret:
-            result.append({"site": site, "SIRET/SIREN": siret})
-        else:
-            result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
-    return result
+# def get_siret_from_sites(sites):
+#     result = []
+#     for site in sites:
+#         siret = extract_siret_from_mentions_legales(site)
+#         if siret:
+#             print(site)
+#             result.append({"site": site, "SIRET/SIREN": siret})
+#         else:
+#             print(site)
+#             result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
+#     return result
 
-result = get_siret_from_sites(sites)
+# result = get_siret_from_sites(sites)
 
-print(result)
+# print(result)
