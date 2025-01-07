@@ -104,7 +104,6 @@ def get_base_urls_from_file(file_path = "BaseUrl.txt"):
 
     return list(base_urls)
 
-sites = get_base_urls_from_file()
 def get_siret_from_sites(sites):
     nbSiteFound = 0
     result = []
@@ -117,13 +116,14 @@ def get_siret_from_sites(sites):
             result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
     return result, nbSiteFound
 
-result, nbSiteFound = get_siret_from_sites(sites)
 
-json_data = json.dumps(result, indent=4)
+def analyseSite() :
+    sites = get_base_urls_from_file()
+    result, nbSiteFound = get_siret_from_sites(sites)
 
-print(json_data)
+    json_data = json.dumps(result, indent=4)
+    print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
 
-print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
-with open('result.json', 'w') as file:
-    file.write(json_data)
+    with open('result.json', 'w') as file:
+        file.write(json_data)
     
