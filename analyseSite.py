@@ -5,6 +5,7 @@ import json
 from requests.exceptions import RequestException, Timeout
 import random
 from env.botData import user_agents
+from extractBaseUrls import extractBaseUrls
 
 def sendRequest(url, timeout=8):
     headers = random.choice(user_agents)
@@ -46,6 +47,7 @@ def extract_siret_from_mentions_legales(url):
             # print("ok")
             break
     # print(soup.find_all('a', href=True))
+    # print(mentions_legales_link)
     
     if mentions_legales_link is None:
         for a in soup.find_all('a', href=True):
@@ -54,6 +56,7 @@ def extract_siret_from_mentions_legales(url):
             if ('confidentialites' in href or 'conditions' in href) and ('politique' in href or 'generales' in href):
                 mentions_legales_link = a['href']
                 break
+    # print(mentions_legales_link)
     
     if mentions_legales_link:
         if mentions_legales_link.startswith('/'):
@@ -72,7 +75,8 @@ def extract_siret_from_mentions_legales(url):
         response = requests.get(full_url,  headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
-        page_text = soup.get_text().replace(' ', '')
+        page_text = page_text.replace('.', '')
+        page_text = page_text.replace(' ', '')
         # print(page_text)
         siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)', page_text)
 
@@ -87,15 +91,9 @@ def extract_siret_from_mentions_legales(url):
         return None
     
 
-# url_site_ecommerce = 'https://api.societe.com/'  
-# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-# if siret:
-#     print(f"SIRET/SIREN récupéré : {siret}")
-
-
 def get_base_urls_from_file(file_path = "BaseUrl.txt"):
     base_urls = set()
-    print(file_path)
+    # print(file_path)
     with open(file_path, 'r') as file:
         for line in file:
             line = line.strip() 
@@ -118,12 +116,20 @@ def get_siret_from_sites(sites):
 
 
 def analyseSite() :
+    extractBaseUrls()
     sites = get_base_urls_from_file()
     result, nbSiteFound = get_siret_from_sites(sites)
 
     json_data = json.dumps(result, indent=4)
     print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
 
-    with open('result.json', 'w') as file:
-        file.write(json_data)
+    return json_data
+    # with open('result.json', 'w') as file:
+        # file.write(json_data)
     
+    
+# url_site_ecommerce = 'https://leformier.com'  
+# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+# if siret:
+#     print(f"SIRET/SIREN récupéré : {siret}")
+
