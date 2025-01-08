@@ -105,11 +105,13 @@ def get_base_urls_from_file(file_path = "BaseUrl.txt"):
 def get_siret_from_sites(sites):
     nbSiteFound = 0
     result = []
+    count = 0
     for site in sites:
+        count += 1
         siret = extract_siret_from_mentions_legales(site)
         if siret:
             nbSiteFound += 1
-            result.append({"site": site, "SIRET/SIREN": siret})
+            result.append({"id" : count, "url": site, "status" : "pending", "checked" : False, "identifier" : {"type": "siren", "value" : siret}})
         else:
             result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
     return result, nbSiteFound
