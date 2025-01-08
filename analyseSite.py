@@ -113,7 +113,7 @@ def get_siret_from_sites(sites):
             nbSiteFound += 1
             result.append({"id" : count, "url": site, "status" : "pending", "checked" : False, "identifier" : {"type": "siren", "value" : siret}})
         else:
-            result.append({"site": site, "SIRET/SIREN": "Non trouvé"})
+            result.append({"id" : count, "url": site, "status" : "pending", "checked" : False, "identifier" : {"type": "siren", "value" : "Non trouvé"}})
     return result, nbSiteFound
 
 
@@ -122,10 +122,12 @@ def analyseSite() :
     sites = get_base_urls_from_file()
     result, nbSiteFound = get_siret_from_sites(sites)
 
-    json_data = json.dumps(result, indent=4)
-    print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
 
-    return json_data
+    # json_data = json.dumps(result, indent=4)
+    print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
+    print("result ==== ", result)
+
+    return result
     # with open('result.json', 'w') as file:
         # file.write(json_data)
     
