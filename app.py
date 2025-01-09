@@ -1,6 +1,6 @@
 from analyseSite import analyseSite
 import threading
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
 
@@ -10,9 +10,21 @@ CORS(app)
 
 socketio = SocketIO(app, cors_allowed_origins="*")  
 
-def lunchApi():
+
+def write_to_file(data):
+    print("dattta  == ", data)
+    with open("urls.txt", "w") as file:
+        for item in data:
+            file.write(item + "\n")
+
+                
+def lunchApi(typePro, data):
     try:
-        result = analyseSite() 
+        if(typePro == "oneUrl") :
+            write_to_file([data["url"]])
+            result = analyseSite()
+        else:
+            result = analyseSite(data)
         print("Analyse terminée")
         
         socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result})
@@ -22,7 +34,16 @@ def lunchApi():
 
 @app.route('/api/analyse', methods=['POST'])
 def analyse():
-    thread = threading.Thread(target=lunchApi)
+    thread = threading.Thread(target=lunchApi(lunchApi("multipleUrl", "data")))
+    thread.start()
+
+    return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée"}), 202
+
+@app.route('/api/analyse/one-url', methods=['POST'])
+def analyseOneLink():
+    data = request.get_json()
+    print(data)
+    thread = threading.Thread(target=lunchApi("oneUrl", data))
     thread.start()
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée"}), 202
