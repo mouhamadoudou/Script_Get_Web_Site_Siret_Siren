@@ -4,6 +4,7 @@ import re
 import json
 from requests.exceptions import RequestException, Timeout
 import random
+import string
 from env.botData import user_agents
 from extractBaseUrls import extractBaseUrls
 
@@ -18,7 +19,7 @@ def sendRequest(url, timeout=8):
     except RequestException as e:
         print(f"Erreur lors de la requête vers {url}: {e}")
         return None
-       
+
 
 def extract_siret_from_mentions_legales(url):
     headers = random.choice(user_agents)
@@ -76,12 +77,18 @@ def extract_siret_from_mentions_legales(url):
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
         page_text = page_text.replace('.', '')
-        page_text = page_text.replace(' ', '')
-        # print(page_text)
+        page_text = page_text.replace(' ', '')  
+        page_text = page_text.replace('\t', '')  
+        page_text = page_text.replace('\n', '')  
+        page_text = page_text.replace('\r', '')
+        
+        printable_chars = string.printable  
+        page_text = ''.join(char for char in page_text if char in printable_chars)
+        
         siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)', page_text)
-
-        # print(page_text)
+        
         if siret_siren_list:
+            # print("rees = ", siret_siren_list)
             return siret_siren_list[0]  
         else:
             print("SIRET/SIREN non trouvé. URL = ", url)
@@ -111,9 +118,9 @@ def get_siret_from_sites(sites):
         siret = extract_siret_from_mentions_legales(site)
         if siret:
             nbSiteFound += 1
-            result.append({"id" : count, "url": site, "status" : "pending", "checked" : False, "identifier" : {"type": "siren", "value" : siret}})
+            result.append({"id" : count, "url": site, "status" : "getIt", "checked" : False, "identifier" : {"type": "siren", "value" : siret}})
         else:
-            result.append({"id" : count, "url": site, "status" : "pending", "checked" : False, "identifier" : {"type": "siren", "value" : "Non trouvé"}})
+            result.append({"id" : count, "url": site, "status" : "didntGetIt", "checked" : False, "identifier" : {"type": "siren", "value" : "Non trouvé"}})
     return result, nbSiteFound
 
 
@@ -132,8 +139,8 @@ def analyseSite() :
         # file.write(json_data)
     
     
-# url_site_ecommerce = 'https://leformier.com'  
-# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-# if siret:
-#     print(f"SIRET/SIREN récupéré : {siret}")
+url_site_ecommerce = 'https://www.caseo-maison.com'  
+siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+if siret:
+    print(f"SIRET/SIREN récupéré : {siret}")
 
