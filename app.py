@@ -15,12 +15,11 @@ def write_to_file(data):
             file.write(item + "\n")
 
 def lunchApi(typePro, arg2, request_id):
-    print("okkkkk la -----------------------------")
     try:
         
         if typePro == "oneUrl":
             write_to_file([arg2["url"]])
-            result = analyseSite()  
+            result, nbSiteFound = analyseSite()  
         else:
             data = []
             if arg2:
@@ -29,10 +28,10 @@ def lunchApi(typePro, arg2, request_id):
                     file_content = file_content.decode('utf-8')
                     data = file_content.splitlines()
                     write_to_file(data)
-                    print("Contenu du fichier texte :", data)
-                result = analyseSite()  
+                    # print("Contenu du fichier texte :", data)
+                result, nbSiteFound = analyseSite()  
         
-        socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result, 'request_id': request_id})
+        socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result, 'nb_site_found' : nbSiteFound, 'request_id': request_id})
 
     except Exception as e:
         
@@ -71,7 +70,6 @@ def analyseMultipleLink():
     file = request.files.get('file')  
     request_id = request.form.get('request_id')
     
-    print("--------------------------------request id  ------ ", request.files)
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
     

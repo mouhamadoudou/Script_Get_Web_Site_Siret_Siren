@@ -88,7 +88,7 @@ def extract_siret_from_mentions_legales(url):
         siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)', page_text)
         
         if siret_siren_list:
-            # print("rees = ", siret_siren_list)
+            print("rees = ", siret_siren_list)
             return siret_siren_list[0]  
         else:
             print("SIRET/SIREN non trouvé. URL = ", url)
@@ -100,7 +100,7 @@ def extract_siret_from_mentions_legales(url):
 
 def get_base_urls_from_file(file_path = "BaseUrl.txt"):
     base_urls = set()
-    # print(file_path)
+    # print(file_path)d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)
     with open(file_path, 'r') as file:
         for line in file:
             line = line.strip() 
@@ -132,15 +132,14 @@ def analyseSite() :
 
     # json_data = json.dumps(result, indent=4)
     print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
-    print("result ==== ", result)
 
-    return result
+    return result, nbSiteFound
     # with open('result.json', 'w') as file:
         # file.write(json_data)
     
     
-url_site_ecommerce = 'https://www.caseo-maison.com'  
-siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-if siret:
-    print(f"SIRET/SIREN récupéré : {siret}")
+# url_site_ecommerce = 'https://58facettes.fr'  
+# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+# if siret:
+#     print(f"SIRET/SIREN récupéré : {siret}")
 
