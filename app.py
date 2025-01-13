@@ -9,17 +9,18 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 def write_to_file(data):
-    # Ecrit dans le fichier urls.txt
+    
     with open("urls.txt", "w") as file:
         for item in data:
             file.write(item + "\n")
 
 def lunchApi(typePro, arg2, request_id):
+    print("okkkkk la -----------------------------")
     try:
-        # Effectue l'analyse en fonction du type d'URL
+        
         if typePro == "oneUrl":
             write_to_file([arg2["url"]])
-            result = analyseSite()  # Simuler le résultat de l'analyse
+            result = analyseSite()  
         else:
             data = []
             if arg2:
@@ -29,41 +30,36 @@ def lunchApi(typePro, arg2, request_id):
                     data = file_content.splitlines()
                     write_to_file(data)
                     print("Contenu du fichier texte :", data)
-                result = analyseSite()  # Simuler l'analyse pour le fichier
-
-        # Envoi du résultat avec le request_id
+                result = analyseSite()  
+        
         socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result, 'request_id': request_id})
 
     except Exception as e:
-        # En cas d'erreur, envoi du message d'erreur avec le request_id
+        
         print(f"Error during analysis: {e}")
         socketio.emit('analyse_done', {'message': 'Erreur lors de l\'analyse', 'data': str(e), 'request_id': request_id})
 
-
 @app.route('/api/analyse', methods=['POST'])
 def analyse():
-    data = request.get_json()  # Récupérer les données envoyées en JSON
-    request_id = data.get('request_id', None)  # Récupérer le request_id envoyé par le client
+    data = request.get_json()  
+    request_id = data.get('request_id', None)  
     
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
-
-    # Démarrer un nouveau thread pour l'analyse, en passant le request_id
+    
     thread = threading.Thread(target=lunchApi, args=("multipleUrl", data, request_id))
-    thread.start()  # Démarre le thread d'analyse
+    thread.start()  
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
 
-
 @app.route('/api/analyse/oneUrl', methods=['POST'])
 def analyseOneLink():
-    data = request.get_json()  # Récupérer les données pour une URL
-    request_id = data.get('request_id', None)  # Récupérer le request_id envoyé par le client
+    data = request.get_json()  
+    request_id = data.get('request_id', None)  
 
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
 
-    # Démarrer un nouveau thread pour l'analyse de l'URL, en passant le request_id
     thread = threading.Thread(target=lunchApi, args=("oneUrl", data, request_id))
     thread.start()
 
@@ -72,18 +68,17 @@ def analyseOneLink():
 
 @app.route('/api/analyse/multipleUrl', methods=['POST'])
 def analyseMultipleLink():
-    file = request.files.get('file')  # Récupérer le fichier envoyé par l'utilisateur
-    request_id = request.headers.get('request_id')  # Récupérer le request_id dans l'en-tête
+    file = request.files.get('file')  
+    request_id = request.form.get('request_id')
     
+    print("--------------------------------request id  ------ ", request.files)
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
-
-    # Démarrer un nouveau thread pour l'analyse du fichier, en passant le request_id
+    
     thread = threading.Thread(target=lunchApi, args=("multipleUrl", file, request_id))
-    thread.start()  # Démarre le thread
+    thread.start()  
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
-
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
