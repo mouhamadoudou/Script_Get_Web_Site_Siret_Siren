@@ -7,6 +7,7 @@ import random
 import string
 from env.botData import user_agents
 from extractBaseUrls import extractBaseUrls
+from flask_socketio import SocketIO
 
 def sendRequest(url, timeout=8):
     headers = random.choice(user_agents)
@@ -109,25 +110,32 @@ def get_base_urls_from_file(file_path = "BaseUrl.txt"):
 
     return list(base_urls)
 
-def get_siret_from_sites(sites):
+def get_siret_from_sites(sites, request_id, socketio):
     nbSiteFound = 0
     result = []
     count = 0
+    sitesLen = len(sites)
     for site in sites:
         count += 1
         siret = extract_siret_from_mentions_legales(site)
         if siret:
+            print("laaa")
             nbSiteFound += 1
-            result.append({"id" : count, "url": site, "status" : "getIt", "checked" : False, "identifier" : {"type": "siren", "value" : siret}})
+            # result.append({"id": count, "url": site, "status": "getIt", "checked": False, "identifier": {"type": "siren", "value": siret}})
+            socketio.emit('analyse_done', {'message': f"{count} Sites traité sur {sitesLen}", 'data': [{"id": count, "url": site, "status": "getIt", "checked": False, "identifier": {"type": "siren", "value": siret}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
         else:
-            result.append({"id" : count, "url": site, "status" : "didntGetIt", "checked" : False, "identifier" : {"type": "siren", "value" : "Non trouvé"}})
+            socketio.emit('analyse_done', {'message': f"Site {count} traité", 'data': [{"id": count, "url": site, "status": "didntGetIt", "checked": False, "identifier": {"type": "siren", "value": "Non trouvé"}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
+            # result.append()
+        
+        # Emitting the result after processing each site
+
     return result, nbSiteFound
 
 
-def analyseSite() :
+def analyseSite(request_id, socketio) :
     extractBaseUrls()
     sites = get_base_urls_from_file()
-    result, nbSiteFound = get_siret_from_sites(sites)
+    result, nbSiteFound = get_siret_from_sites(sites, request_id, socketio)
 
 
     # json_data = json.dumps(result, indent=4)
