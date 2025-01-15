@@ -11,6 +11,10 @@ from flask_socketio import SocketIO
 
 def sendRequest(url, timeout=8):
     headers = random.choice(user_agents)
+    
+    if ".gouv" in url:
+        return None
+    
     try:
         response = requests.get(url, headers=headers, timeout=timeout)
         return response
@@ -77,17 +81,19 @@ def extract_siret_from_mentions_legales(url):
         response = requests.get(full_url,  headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
         page_text = soup.get_text()
+        page_text = page_text.replace(')', '')
+        page_text = page_text.replace('(', '')  
         page_text = page_text.replace('.', '')
         page_text = page_text.replace(' ', '')  
         page_text = page_text.replace('\t', '')  
         page_text = page_text.replace('\n', '')  
         page_text = page_text.replace('\r', '')
-        
+
         printable_chars = string.printable  
         page_text = ''.join(char for char in page_text if char in printable_chars)
-        
-        siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)|(?<!\d)\d{14}(?!\d)', page_text)
-        
+
+        siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)', page_text)
+        # print("page == ", page_text)
         if siret_siren_list:
             print("rees = ", siret_siren_list)
             return siret_siren_list[0]  
@@ -146,8 +152,8 @@ def analyseSite(request_id, socketio) :
         # file.write(json_data)
     
     
-# url_site_ecommerce = 'https://58facettes.fr'  
-# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-# if siret:
-#     print(f"SIRET/SIREN récupéré : {siret}")
+url_site_ecommerce = 'https://58facettes.fr'  
+siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+if siret:
+    print(f"SIRET/SIREN récupéré : {siret}")
 
