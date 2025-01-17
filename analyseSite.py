@@ -89,14 +89,13 @@ def extract_siret_from_mentions_legales(url):
         page_text = page_text.replace('\n', '')  
         page_text = page_text.replace('\r', '')
 
-        printable_chars = string.printable  
-        page_text = ''.join(char for char in page_text if char in printable_chars)
+        # printable_chars = string.printable  
+        # page_text = ''.join(char for char in page_text if char in printable_chars)
 
-        siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d)', page_text)
-        # print("page == ", page_text)
+        siret_siren_list = re.findall(r'(?<!\d)\d{9}(?!\d|€)', page_text)
         if siret_siren_list:
-            print("rees = ", siret_siren_list)
-            return siret_siren_list[0]  
+            # print("rees = ", siret_siren_list)
+            return siret_siren_list[0]
         else:
             print("SIRET/SIREN non trouvé. URL = ", url)
             return None
@@ -152,7 +151,7 @@ def analyseSite(request_id, socketio) :
         # file.write(json_data)
     
     
-url_site_ecommerce = 'https://58facettes.fr'  
+url_site_ecommerce = 'https://www.ldlc.com'  
 siret = extract_siret_from_mentions_legales(url_site_ecommerce)
 if siret:
     print(f"SIRET/SIREN récupéré : {siret}")
