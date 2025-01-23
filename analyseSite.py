@@ -8,6 +8,9 @@ import string
 from env.botData import user_agents
 from extractBaseUrls import extractBaseUrls
 from flask_socketio import SocketIO
+import http.client
+import json
+from urllib.parse import urlparse
 
 def sendRequest(url, timeout=8):
     headers = random.choice(user_agents)
@@ -116,20 +119,24 @@ def get_base_urls_from_file(file_path = "BaseUrl.txt"):
     return list(base_urls)
 
 def get_siret_from_sites(sites, request_id, socketio):
+    print("sittttttes == ", sites)
     nbSiteFound = 0
     result = []
     count = 0
     sitesLen = len(sites)
     for site in sites:
         count += 1
-        siret = extract_siret_from_mentions_legales(site)
+        parsed_url = urlparse(site['link'])
+        base_url = f"{parsed_url.scheme}://{parsed_url.netloc}"
+        siret = extract_siret_from_mentions_legales(base_url)
+        print("bassee === ", base_url)
         if siret:
-            print("laaa")
+            # print("laaa")
             nbSiteFound += 1
             # result.append({"id": count, "url": site, "status": "getIt", "checked": False, "identifier": {"type": "siren", "value": siret}})
-            socketio.emit('analyse_done', {'message': f"{count} Sites traité sur {sitesLen}", 'data': [{"id": count, "url": site, "status": "getIt", "checked": False, "identifier": {"type": "siren", "value": siret}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
+            socketio.emit('analyse_done', {'message': f"{count} Sites traité sur {sitesLen}", 'data': [{"id": count, "url": base_url, "status": "getIt", "checked": False, "identifier": {"type": "siren", "value": siret}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
         else:
-            socketio.emit('analyse_done', {'message': f"Site {count} traité", 'data': [{"id": count, "url": site, "status": "didntGetIt", "checked": False, "identifier": {"type": "siren", "value": "Non trouvé"}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
+            socketio.emit('analyse_done', {'message': f"Site {count} traité", 'data': [{"id": count, "url": base_url, "status": "didntGetIt", "checked": False, "identifier": {"type": "siren", "value": "Non trouvé"}}], 'nb_site_found': nbSiteFound, 'request_id': request_id})
             # result.append()
         
         # Emitting the result after processing each site
@@ -140,7 +147,12 @@ def get_siret_from_sites(sites, request_id, socketio):
 def analyseSite(request_id, socketio) :
     extractBaseUrls()
     sites = get_base_urls_from_file()
-    result, nbSiteFound = get_siret_from_sites(sites, request_id, socketio)
+    webList = getWeblist("vetement homme")
+    
+    if (webList == None) :
+        return None
+    # print(webList)
+    result, nbSiteFound = get_siret_from_sites(webList, request_id, socketio)
 
 
     # json_data = json.dumps(result, indent=4)
@@ -151,8 +163,33 @@ def analyseSite(request_id, socketio) :
         # file.write(json_data)
     
     
-url_site_ecommerce = 'https://www.ldlc.com'  
-siret = extract_siret_from_mentions_legales(url_site_ecommerce)
-if siret:
-    print(f"SIRET/SIREN récupéré : {siret}")
+# url_site_ecommerce = 'https://www.ldlc.com'  
+# siret = extract_siret_from_mentions_legales(url_site_ecommerce)
+# if siret:
+#     print(f"SIRET/SIREN récupéré : {siret}")
+
+
+def getWeblist(query) :
+    conn = http.client.HTTPSConnection("google.serper.dev")
+    payload = json.dumps({
+        "q": query,
+        "location": "France",
+        "gl": "fr",
+        "hl": "fr",
+        "num": 10
+    })
+    headers = {
+        'X-API-KEY': 'c7c659885cae9960e43d8b16382919fcd40716a9',
+        'Content-Type': 'application/json'
+    }
+    conn.request("POST", "/search", payload, headers)
+    res = conn.getresponse()
+    data = res.read()
+
+    result = json.loads(data.decode("utf-8"))
+
+    if 'organic' in result:
+        return result['organic']
+    else:
+        return None
 
