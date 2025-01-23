@@ -16,7 +16,6 @@ def write_to_file(data):
 
 def lunchApi(typePro, arg2, request_id):
     try:
-        
         if typePro == "oneUrl":
             write_to_file([arg2["url"]])
             result, nbSiteFound = analyseSite(request_id, socketio)  
@@ -31,9 +30,7 @@ def lunchApi(typePro, arg2, request_id):
                     print("Contenu du fichier texte --------------------------")
                 analyseSite(request_id, socketio)
                 # result, nbSiteFound = analyseSite()  
-        
         # socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result, 'nb_site_found' : nbSiteFound, 'request_id': request_id})
-
     except Exception as e:
         
         print(f"Error during analysis: {e}")
