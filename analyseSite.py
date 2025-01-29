@@ -119,7 +119,7 @@ def get_base_urls_from_file(file_path = "BaseUrl.txt"):
     return list(base_urls)
 
 def get_siret_from_sites(sites, request_id, socketio):
-    print("sittttttes == ", sites)
+    # print("sittttttes == ", sites)
     nbSiteFound = 0
     result = []
     count = 0
@@ -144,21 +144,26 @@ def get_siret_from_sites(sites, request_id, socketio):
     return result, nbSiteFound
 
 
-def analyseSite(request_id, socketio) :
-    extractBaseUrls()
-    sites = get_base_urls_from_file()
-    webList = getWeblist("vetement homme")
+def analyseSite(request_id, socketio, searchKey : None) :
     
-    if (webList == None) :
-        return None
+    if (searchKey != None) :
+        webList = getWeblist(searchKey)
+        result, nbSiteFound = get_siret_from_sites(webList, request_id, socketio)
+        return result, nbSiteFound
+        
+    # extractBaseUrls()
+    # sites = get_base_urls_from_file()
+    
+    # if (webList == None) :
+    #     return None
     # print(webList)
-    result, nbSiteFound = get_siret_from_sites(webList, request_id, socketio)
+    # result, nbSiteFound = get_siret_from_sites(webList, request_id, socketio)
 
 
     # json_data = json.dumps(result, indent=4)
     print("Analyse terminé Nombre de SIREN/SIRET trouvé : ", nbSiteFound, " sur ", len(sites))
 
-    return result, nbSiteFound
+    # return result, nbSiteFound
     # with open('result.json', 'w') as file:
         # file.write(json_data)
     
