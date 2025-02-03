@@ -5,7 +5,10 @@ from flask_socketio import SocketIO
 from flask_cors import CORS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import pandas as pd
+import os
+name = os.getenv("NAME")  
+my_var = os.getenv("MY_VAR")  
+
 
 app = Flask(__name__)
 CORS(app)
@@ -99,28 +102,47 @@ def analyseKeywordSearch():
 @app.route('/api/analyse/exportDataToGoogleSheet', methods=['POST'])
 def exportDataToGoogleSheet():
     data = request.get_json()   
-    df = pd.DataFrame(data)
-    # scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
-    # creds = ServiceAccountCredentials.from_json_keyfile_name('./keyGoogle.json', scope)
-
-    # client = gspread.authorize(creds)
     
-    # spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  # Remplace par ton ID de feuille
-    # worksheet = spreadsheet.get_worksheet(10)  # Choisir la première feuille
-    # df = data[0]
+    scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
+    creds = ServiceAccountCredentials.from_json_keyfile_name('./keyGoogle.json', scope)
+
+    client = gspread.authorize(creds)
+    
+    spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  # Remplace par ton ID de feuille
+    worksheet = spreadsheet.get_worksheet(10)  # Choisir la première feuille
+    data[0]['url']
 
     # headers = list(data[0].keys())
-
-    result = "Nom: " + df["contacts"]['lastName'] + " Prenom: " + df["contacts"]['firstName']
-    print("data === ", result)
+    
+    result = []
+    
+    for propsect in data:
+        contacts = propsect.get('enrichment', {}).get('contacts', [])
+        
+        propsect.get('enrichment', {})
+        url = propsect["url"]
+        revenue = "CA " + str(propsect.get('enrichment', {})["revenue"]) + "€"
+    
+        contactListText = "\n".join(
+            "NOM: " + contact['lastName'] + ",   PRENOM: " + contact['firstName'] +
+            ",   FONCTION: " + contact['jobTitle'] + ",   PERSO: " + contact['phoneNumber'] +
+            ",   FIX: " + contact['mobileNumber'] + ",   EMAIL: " + contact['email']
+            for contact in contacts
+        )
+    
+        result.append([url, contactListText, revenue])
+        
+    for row in result:
+        worksheet.append_row(row)
+    
     # if not request_id:
     #     return jsonify({"message": "request_id est nécessaire"}), 400
     
     # thread = threading.Thread(target=lunchApi, args=("keyWord", keyWord, request_id))
     # thread.start()  
 
-    return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée"}), 202
-
+    return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    app.run(host='0.0.0.0', port=5000)
