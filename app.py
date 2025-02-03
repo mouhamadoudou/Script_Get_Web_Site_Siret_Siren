@@ -9,6 +9,7 @@ import os
 name = os.getenv("NAME")  
 my_var = os.getenv("MY_VAR")  
 
+port = int(os.getenv("PORT", 5000))
 
 app = Flask(__name__)
 CORS(app)
@@ -144,5 +145,7 @@ def exportDataToGoogleSheet():
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
-    app.run(host='0.0.0.0', port=80)
+    # socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
+    # socketio.run(app, host="0.0.0.0", port=500, debug=True, allow_unsafe_werkzeug=True)
+    # app.run(host='0.0.0.0', port=80)
+    socketio.run(app, host="0.0.0.0", port=port, debug=True)
