@@ -5,11 +5,7 @@ from flask_socketio import SocketIO
 from flask_cors import CORS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-import os
-name = os.getenv("NAME")  
-my_var = os.getenv("MY_VAR")  
-
-port = int(os.getenv("PORT", 5000))
+import pandas as pd
 
 app = Flask(__name__)
 CORS(app)
@@ -100,6 +96,13 @@ def analyseKeywordSearch():
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
 
+
+# if __name__ == '__main__':
+#     socketio.run(app, debug=True)
+    
+    
+    
+    
 @app.route('/api/analyse/exportDataToGoogleSheet', methods=['POST'])
 def exportDataToGoogleSheet():
     data = request.get_json()   
@@ -148,4 +151,4 @@ if __name__ == '__main__':
     # socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
     # socketio.run(app, host="0.0.0.0", port=500, debug=True, allow_unsafe_werkzeug=True)
     # app.run(host='0.0.0.0', port=80)
-    socketio.run(app, host="0.0.0.0", port=port, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
