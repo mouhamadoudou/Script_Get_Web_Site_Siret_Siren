@@ -8,7 +8,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
+# socketio = SocketIO(app, cors_allowed_origins="*")
+CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 def write_to_file(data):
