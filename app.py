@@ -19,6 +19,25 @@ def write_to_file(data):
         for item in data:
             file.write(item + "\n")
 
+def formatRes(data):
+    result = []
+    for propsect in data:
+        contacts = propsect.get('enrichment', {}).get('contacts', [])
+        
+        propsect.get('enrichment', {})
+        url = propsect["url"]
+        revenue = "CA " + str(propsect.get('enrichment', {})["revenue"]) + "€"
+    
+        contactListText = "\n".join(
+            "NOM: " + contact['lastName'] + ",   PRENOM: " + contact['firstName'] +
+            ",   FONCTION: " + contact['jobTitle'] + ",   PERSO: " + contact['phoneNumber'] +
+            ",   FIX: " + contact['mobileNumber'] + ",   EMAIL: " + contact['email']
+            for contact in contacts
+        )
+    
+        result.append([url, contactListText, revenue])
+    return result
+
 def lunchApi(typePro, arg2, request_id):
     try:
         if typePro == 'keyWord':
@@ -95,16 +114,8 @@ def analyseKeywordSearch():
     
     thread = threading.Thread(target=lunchApi, args=("keyWord", keyWord, request_id))
     thread.start()  
+    return jsonify({"message": "Analyse en 0cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
 
-    return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
-
-
-# if __name__ == '__main__':
-#     socketio.run(app, debug=True)
-    
-    
-    
-    
 @app.route('/api/analyse/exportDataToGoogleSheet', methods=['POST'])
 def exportDataToGoogleSheet():
     data = request.get_json()   
@@ -118,34 +129,11 @@ def exportDataToGoogleSheet():
     worksheet = spreadsheet.get_worksheet(10)  # Choisir la première feuille
     data[0]['url']
 
-    # headers = list(data[0].keys())
     
-    result = []
-    
-    for propsect in data:
-        contacts = propsect.get('enrichment', {}).get('contacts', [])
-        
-        propsect.get('enrichment', {})
-        url = propsect["url"]
-        revenue = "CA " + str(propsect.get('enrichment', {})["revenue"]) + "€"
-    
-        contactListText = "\n".join(
-            "NOM: " + contact['lastName'] + ",   PRENOM: " + contact['firstName'] +
-            ",   FONCTION: " + contact['jobTitle'] + ",   PERSO: " + contact['phoneNumber'] +
-            ",   FIX: " + contact['mobileNumber'] + ",   EMAIL: " + contact['email']
-            for contact in contacts
-        )
-    
-        result.append([url, contactListText, revenue])
+    result = formatRes(data)
         
     for row in result:
         worksheet.append_row(row)
-    
-    # if not request_id:
-    #     return jsonify({"message": "request_id est nécessaire"}), 400
-    
-    # thread = threading.Thread(target=lunchApi, args=("keyWord", keyWord, request_id))
-    # thread.start()  
 
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
