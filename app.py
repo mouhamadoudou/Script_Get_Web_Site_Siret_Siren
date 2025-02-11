@@ -12,7 +12,8 @@ eventlet.monkey_patch()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
+# socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
+socketio = SocketIO(app, cors_allowed_origins=["http://localhost:5173"], logger=True, engineio_logger=True)
 
 # Fonction de traitement des données et de gestion du fichier
 def write_to_file(data):
