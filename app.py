@@ -1,24 +1,21 @@
+import eventlet
 from analyseSite import analyseSite
-import threading
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from flask_cors import CORS
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
-import eventlet
+
+# Patch eventlet pour assurer la gestion asynchrone des sockets
 eventlet.monkey_patch()
 
 app = Flask(__name__)
-# CORS(app)
-# socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app, resources={r"/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
-# socketio = SocketIO(app, cors_allowed_origins="*")
-
+# Fonction de traitement des données et de gestion du fichier
 def write_to_file(data):
-    
     with open("urls.txt", "w") as file:
         for item in data:
             file.write(item + "\n")
@@ -27,11 +24,9 @@ def formatRes(data):
     result = []
     for propsect in data:
         contacts = propsect.get('enrichment', {}).get('contacts', [])
-        
-        propsect.get('enrichment', {})
         url = propsect["url"]
-        revenue = "CA " + str(propsect.get('enrichment', {})["revenue"]) + "€"
-    
+        revenue = "CA " + str(propsect.get('enrichment', {}).get("revenue", "Non précisé")) + "€"
+        
         contactListText = "\n".join(
             "NOM: " + contact['lastName'] + ",   PRENOM: " + contact['firstName'] +
             ",   FONCTION: " + contact['jobTitle'] + ",   PERSO: " + contact['phoneNumber'] +
@@ -42,13 +37,14 @@ def formatRes(data):
         result.append([url, contactListText, revenue])
     return result
 
+# Fonction principale de lancement de l'API
 def lunchApi(typePro, arg2, request_id):
     try:
         if typePro == 'keyWord':
             analyseSite(request_id, socketio, arg2)
         if typePro == "oneUrl":
             write_to_file([arg2["url"]])
-            result, nbSiteFound = analyseSite(request_id, socketio)  
+            analyseSite(request_id, socketio)  
         else:
             data = []
             if arg2:
@@ -57,12 +53,8 @@ def lunchApi(typePro, arg2, request_id):
                     file_content = file_content.decode('utf-8')
                     data = file_content.splitlines()
                     write_to_file(data)
-                    print("Contenu du fichier texte --------------------------")
                 analyseSite(request_id, socketio)
-                # result, nbSiteFound = analyseSite()  
-        # socketio.emit('analyse_done', {'message': 'Analyse terminée', 'data': result, 'nb_site_found' : nbSiteFound, 'request_id': request_id})
     except Exception as e:
-        
         print(f"Error during analysis: {e}")
         socketio.emit('analyse_done', {'message': 'Erreur lors de l\'analyse', 'data': str(e), 'request_id': request_id})
 
@@ -74,8 +66,8 @@ def analyse():
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
     
-    thread = threading.Thread(target=lunchApi, args=("multipleUrl", data, request_id))
-    thread.start()  
+    # Utilisation de eventlet.spawn pour gérer l'appel asynchrone
+    eventlet.spawn(lunchApi, "multipleUrl", data, request_id)
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
 
@@ -86,11 +78,10 @@ def analyseOneLink():
 
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
-    thread = threading.Thread(target=lunchApi, args=("oneUrl", data, request_id))
-    thread.start()
+
+    eventlet.spawn(lunchApi, "oneUrl", data, request_id)
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
-
 
 @app.route('/api/analyse/multipleUrl', methods=['POST'])
 def analyseMultipleLink():
@@ -100,11 +91,9 @@ def analyseMultipleLink():
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
     
-    thread = threading.Thread(target=lunchApi, args=("multipleUrl", file, request_id))
-    thread.start()  
+    eventlet.spawn(lunchApi, "multipleUrl", file, request_id)
 
     return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
-
 
 @app.route('/api/analyse/keywordSearch', methods=['POST'])
 def analyseKeywordSearch():
@@ -112,13 +101,12 @@ def analyseKeywordSearch():
     request_id = data.get('request_id', None)  
     keyWord = data.get('keyWord', None)  
     
-    print("keywwordd === ", keyWord)
     if not request_id:
         return jsonify({"message": "request_id est nécessaire"}), 400
     
-    thread = threading.Thread(target=lunchApi, args=("keyWord", keyWord, request_id))
-    thread.start()  
-    return jsonify({"message": "Analyse en 0cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
+    eventlet.spawn(lunchApi, "keyWord", keyWord, request_id)
+
+    return jsonify({"message": "Analyse en cours, vous serez notifié quand elle sera terminée", "request_id": request_id}), 202
 
 @app.route('/api/analyse/exportDataToGoogleSheet', methods=['POST'])
 def exportDataToGoogleSheet():
@@ -129,10 +117,9 @@ def exportDataToGoogleSheet():
 
     client = gspread.authorize(creds)
     
-    spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  # Remplace par ton ID de feuille
-    worksheet = spreadsheet.get_worksheet(10)  # Choisir la première feuille
+    spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  
+    worksheet = spreadsheet.get_worksheet(10)  
     data[0]['url']
-
     
     result = formatRes(data)
         
@@ -142,8 +129,4 @@ def exportDataToGoogleSheet():
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    # socketio.run(app, debug=True, allow_unsafe_werkzeug=True)
-    # socketio.run(app, host="0.0.0.0", port=500, debug=True, allow_unsafe_werkzeug=True)
-    # app.run(host='0.0.0.0', port=80)
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
-    
