@@ -181,7 +181,7 @@ def getWeblist(query) :
         "location": "France",
         "gl": "fr",
         "hl": "fr",
-        "num": 10
+        "num": 100
     })
     headers = {
         'X-API-KEY': 'c7c659885cae9960e43d8b16382919fcd40716a9',
