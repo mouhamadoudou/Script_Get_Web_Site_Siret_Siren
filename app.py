@@ -11,7 +11,9 @@ app = Flask(__name__)
 # CORS(app)
 # socketio = SocketIO(app, cors_allowed_origins="*")
 CORS(app, resources={r"/*": {"origins": "*"}})
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
+
+# socketio = SocketIO(app, cors_allowed_origins="*")
 
 def write_to_file(data):
     
@@ -142,3 +144,4 @@ if __name__ == '__main__':
     # socketio.run(app, host="0.0.0.0", port=500, debug=True, allow_unsafe_werkzeug=True)
     # app.run(host='0.0.0.0', port=80)
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    
