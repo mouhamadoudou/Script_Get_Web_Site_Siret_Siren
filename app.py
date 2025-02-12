@@ -10,10 +10,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 # Patch eventlet pour assurer la gestion asynchrone des sockets
-
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-# socketio = SocketIO(app, cors_allowed_origins=["http://localhost:5173"], logger=True, engineio_logger=True)
 socketio = SocketIO(app, cors_allowed_origins="*", logger=True, engineio_logger=True)
 
 # Fonction de traitement des données et de gestion du fichier
@@ -24,10 +22,10 @@ def write_to_file(data):
 
 def formatRes(data):
     result = []
-    for propsect in data:
-        contacts = propsect.get('enrichment', {}).get('contacts', [])
-        url = propsect["url"]
-        revenue = "CA " + str(propsect.get('enrichment', {}).get("revenue", "Non précisé")) + "€"
+    for prospect in data:
+        contacts = prospect.get('enrichment', {}).get('contacts', [])
+        url = prospect["url"]
+        revenue = "CA " + str(prospect.get('enrichment', {}).get("revenue", "Non précisé")) + "€"
         
         contactListText = "\n".join(
             "NOM: " + contact['lastName'] + ",   PRENOM: " + contact['firstName'] +
@@ -42,20 +40,21 @@ def formatRes(data):
 # Fonction principale de lancement de l'API
 def lunchApi(typePro, arg2, request_id):
     try:
-        if typePro == 'keyWord':
-            analyseSite(request_id, socketio, arg2)
-        if typePro == "oneUrl":
-            write_to_file([arg2["url"]])
-            analyseSite(request_id, socketio)  
-        else:
-            data = []
-            if arg2:
-                if hasattr(arg2, 'read'):
-                    file_content = arg2.read()
-                    file_content = file_content.decode('utf-8')
-                    data = file_content.splitlines()
-                    write_to_file(data)
-                analyseSite(request_id, socketio)
+        with app.app_context():  # Ensure the app context is available
+            if typePro == 'keyWord':
+                analyseSite(request_id, socketio, arg2)
+            if typePro == "oneUrl":
+                write_to_file([arg2["url"]])
+                analyseSite(request_id, socketio)  
+            else:
+                data = []
+                if arg2:
+                    if hasattr(arg2, 'read'):
+                        file_content = arg2.read()
+                        file_content = file_content.decode('utf-8')
+                        data = file_content.splitlines()
+                        write_to_file(data)
+                    analyseSite(request_id, socketio)
     except Exception as e:
         print(f"Error during analysis: {e}")
         socketio.emit('analyse_done', {'message': 'Erreur lors de l\'analyse', 'data': str(e), 'request_id': request_id})
@@ -114,23 +113,23 @@ def analyseKeywordSearch():
 def exportDataToGoogleSheet():
     data = request.get_json()   
     
-    scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
-    creds = ServiceAccountCredentials.from_json_keyfile_name('./keyGoogle.json', scope)
+    # Ensure you are running under app context
+    with app.app_context():
+        scope = ["https://spreadsheets.google.com/feeds", 'https://www.googleapis.com/auth/drive']
+        creds = ServiceAccountCredentials.from_json_keyfile_name('./keyGoogle.json', scope)
 
-    client = gspread.authorize(creds)
-    
-    spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  
-    worksheet = spreadsheet.get_worksheet(10)  
-    data[0]['url']
-    
-    result = formatRes(data)
+        client = gspread.authorize(creds)
         
-    for row in result:
-        worksheet.append_row(row)
+        spreadsheet = client.open_by_key("1_XKrLQwydkVXSRRxroSUeSY3YJ-asfjcBd2iuhT0U5c")  
+        worksheet = spreadsheet.get_worksheet(10)  
+        data[0]['url']
+        
+        result = formatRes(data)
+            
+        for row in result:
+            worksheet.append_row(row)
 
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    # socketio.run(app, host="0.0.0.0", port=5000, debug=True)
-    # socketio.run(app, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
     socketio.run(app, host='0.0.0.0', port=443, ssl_context='adhoc')
