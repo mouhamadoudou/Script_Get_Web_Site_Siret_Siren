@@ -132,4 +132,4 @@ def exportDataToGoogleSheet():
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=443, ssl_context='adhoc')
+    socketio.run(app, host='0.0.0.0', port=80, ssl_context='adhoc')
