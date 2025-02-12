@@ -1,4 +1,6 @@
 import eventlet
+eventlet.monkey_patch()
+
 from analyseSite import analyseSite
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
@@ -8,7 +10,6 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 
 # Patch eventlet pour assurer la gestion asynchrone des sockets
-eventlet.monkey_patch()
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -130,6 +131,6 @@ def exportDataToGoogleSheet():
     return jsonify({"message": "Le fichier a bien été transféré sur votre document Excel. Veuillez le consulter."}), 202
 
 if __name__ == '__main__':
-    # socketio.run(app, host="0.0.0.0", port=5000, debug=True)
-    socketio.run(app, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    # socketio.run(app, host='0.0.0.0', port=443, ssl_context=('cert.pem', 'key.pem'))
     # socketio.run(app, host='0.0.0.0', port=443, ssl_context='adhoc')
